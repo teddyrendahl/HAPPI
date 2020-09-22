@@ -672,7 +672,8 @@ class Client(collections.abc.Mapping):
         else:
             backend = DEFAULT_BACKEND
 
-        logger.debug("Using Happi backend %r with kwargs", backend, db_kwargs)
+        logger.debug("Using Happi backend %r with kwargs %r",
+                     backend, db_kwargs)
         # Create our database with provided kwargs
         try:
             database = backend(**db_kwargs)

@@ -79,6 +79,7 @@ def valve_info():
             'mps': 'MPS:VGC:PV',
             'location_group': 'LOC',
             'functional_group': 'FUNC',
+            'device_class': 'types.SimpleNamespace'
             }
 
 

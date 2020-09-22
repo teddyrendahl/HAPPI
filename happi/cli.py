@@ -15,6 +15,9 @@ from .utils import is_a_range
 
 import happi
 
+from happi.audit import Audit
+audit = Audit()
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,6 +60,9 @@ def get_parser():
                                         'device loaded')
     parser_load.add_argument('device_names', nargs='+',
                              help='Devices to load')
+    parser_audit = subparsers.add_parser(audit.name, help=audit.help)
+    audit.add_args(parser_audit)
+
     return parser
 
 
@@ -97,8 +103,8 @@ def happi_cli(args):
         range_list = []
         regex_list = []
         is_range = False
+        num_args = len(args.search_criteria)
         for user_arg in args.search_criteria:
-            is_range = False
             if '=' in user_arg:
                 criteria, value = user_arg.split('=', 1)
             else:
@@ -126,7 +132,7 @@ def happi_cli(args):
 
             # skip the criteria for range values
             # it won't be a valid criteria for search_regex()
-            if is_range:
+            if is_a_range(str(value)):
                 pass
             else:
                 client_args[criteria] = fnmatch.translate(value)
@@ -143,9 +149,14 @@ def happi_cli(args):
                 if results[i] == results[j] and results[i] not in repeated:
                     repeated.append(results[i])
 
+        # if we search both range and regex but
+        # they don't have a common item just return
+        if num_args > 1 and is_range and not repeated:
+            logger.error('No devices found')
+            return
         # we only want to return the ones that have been repeated when
         # they have been matched with both search_regex() & search_range()
-        if repeated:
+        elif repeated:
             for res in repeated:
                 res.item.show_info()
             return repeated
@@ -180,7 +191,7 @@ def happi_cli(args):
             )
             response = input()
             if response and response not in registry:
-                logger.info('Invalid device container f{response}')
+                logger.info('Invalid device container %s', response)
                 return
             elif not response:
                 response = 'OphydItem'
@@ -208,8 +219,8 @@ def happi_cli(args):
                     info.enforce_value(item_value)
                     valid_value = True
                     kwargs[info.key] = item_value
-                except Exception:
-                    logger.info(f'Invalid value {item_value}')
+                except Exception as e:
+                    logger.info('Invalid value %s, %s', item_value, e)
 
         device = client.create_device(container, **kwargs)
         logger.info('Please confirm the following info is correct:')
@@ -244,6 +255,8 @@ def happi_cli(args):
         for name in args.device_names:
             devices[name] = client.load_device(name=name)
         start_ipython(argv=['--quick'], user_ns=devices)
+    elif args.cmd == 'audit':
+        audit.run(args)
 
 
 def main():
