@@ -222,6 +222,14 @@ def mockqsbackend():
                 'pcdssetup-motors-11-location': 'XPP goniometer',
                 'pcdssetup-motors-11-pvbase': 'HXX:VON_HAMOS:MMS:01',
                 'pcdssetup-motors-11-name': 'vh_y',
+                'pcdssetup-ps-mpod-1-pvname': 'XPP:USR:MPD:CH:06',
+                'pcdssetup-ps-mpod-2-pvname': 'XPP:USR:MPD:CH:207',
+                'pcdssetup-ps-mpod-2-volt': '24',
+                'pcdssetup-ps-mpod-1-purpose': 'LED',
+                'pcdssetup-ps-mpod-2-purpose': 'Blower',
+                'pcdssetup-ps-mpod-1-name': 'LED',
+                'pcdssetup-ps-mpod-2-name': 'Blower',
+                'pcdssetup-ps-mpod-1-volt': '5',
             }
 
         def getExpName2URAWIProposalIDs(self):

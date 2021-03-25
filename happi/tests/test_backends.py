@@ -1,10 +1,10 @@
 import fcntl
 import os
 import os.path
+from unittest.mock import patch
 
 import pytest
 import simplejson
-
 from happi import Client
 from happi.backends.json_db import JSONBackend
 from happi.errors import DuplicateError, SearchError
@@ -163,7 +163,7 @@ def test_json_initialize():
 
 @requires_questionnaire
 def test_qs_find(mockqsbackend):
-    assert len(list(mockqsbackend.find(dict(beamline='TST')))) == 14
+    assert len(list(mockqsbackend.find(dict(beamline='TST')))) == 16
     assert len(list(mockqsbackend.find(dict(name='sam_r')))) == 1
 
 
@@ -171,7 +171,7 @@ def test_qs_find(mockqsbackend):
 @requires_pcdsdevices
 def test_qsbackend_with_client(mockqsbackend):
     c = Client(database=mockqsbackend)
-    assert len(c.all_items) == 14
+    assert len(c.all_items) == 16
     assert all(
         d.__class__.__name__ in {'Trigger', 'Motor', 'Acromag', 'LCLSItem'}
         for d in c.all_items
@@ -179,6 +179,7 @@ def test_qsbackend_with_client(mockqsbackend):
     device_types = [device.__class__.__name__ for device in c.all_items]
     assert device_types.count('Motor') == 7
     assert device_types.count('Trigger') == 2
+    assert device_types.count('LCLSItem') == 2
     # Acromag: six entries, but one erroneously has the same name
     assert device_types.count('Acromag') == 5
 
@@ -203,3 +204,25 @@ def test_beckoff_axis_device_class(mockqsbackend):
     sam_x = d.get('sam_x')
     assert vh_y.__class__.__name__ == 'BeckhoffAxis'
     assert sam_x.__class__.__name__ == 'IMS'
+
+
+@requires_questionnaire
+@requires_pcdsdevices
+def test_qsbackend_with_mpod(mockqsbackend):
+    c = Client(database=mockqsbackend)
+    # patch the get_max_voltage to be able to determine if LV or HV
+    # if voltage < 50 => LV Channel
+    with patch('pcdsdevices.mpod.MPODChannel.get_max_voltage',
+               return_value=49):
+        d = load_devices(*c.all_devices, pprint=False,
+                         use_cache=False).__dict__
+        led = d.get('led')
+        assert led.__class__.__name__ == 'MPODChannelLV'
+
+    # if voltage > 50 => HV Channel
+    with patch('pcdsdevices.mpod.MPODChannel.get_max_voltage',
+               return_value=50):
+        d = load_devices(*c.all_devices, pprint=False,
+                         use_cache=False).__dict__
+        blower = d.get('blower')
+        assert blower.__class__.__name__ == 'MPODChannelHV'

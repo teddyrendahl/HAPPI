@@ -55,6 +55,16 @@ def _create_ai_ao_callable(name, beamline, info):
                         info, class_name)
 
 
+def _create_mpod_callable(name, beamline, info):
+    """Create the MPOD entry"""
+    container = 'pcdsdevices.happi.containers.LCLSItem'
+    class_name = 'pcdsdevices.device_types.MPOD'
+    prefix = info['pvname']
+    kwargs = {'name': '{{name}}'}
+    return create_entry(name, beamline, prefix, kwargs, container,
+                        info, class_name)
+
+
 def create_entry(name, beamline, prefix, kwargs, container,
                  info, class_name=None):
     """
@@ -106,6 +116,7 @@ DEFAULT_TRANSLATIONS = {
     'trig': _create_trig_callable,
     'ao': _create_ai_ao_callable,
     'ai': _create_ai_ao_callable,
+    'ps-mpod': _create_mpod_callable,
 }
 
 
